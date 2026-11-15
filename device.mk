@@ -3,8 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-# Add common definitions for Qualcomm
-$(call inherit-product, hardware/qcom-caf/common/common.mk)
+# Platform
+TARGET_BOARD_PLATFORM := parrot
+TARGET_KERNEL_VERSION := 6.6
+TARGET_USES_KERNEL_PLATFORM := false
+
+PRODUCT_SOURCE_ROOT_DIRS += -vendor/qcom/common/vendor/gps-legacy
 
 # Dolby Atmos
 $(call inherit-product, hardware/dolby/dolby.mk)
@@ -68,8 +72,31 @@ PRODUCT_PACKAGES += \
     libmemunreachable.vendor \
     libaudioutils_shim
 
-AUDIO_HAL_DIR := hardware/qcom-caf/sm8450-6.6/audio/primary-hal
+AUDIO_HAL_DIR := vendor/qcom/opensource/audio-hal/primary-hal
 CONFIG_HAL_SRC_DIR := $(AUDIO_HAL_DIR)/configs/parrot
+
+# Audio / Display Soong configs
+$(call soong_config_set,tinycompress,enable_extended_compress_format,true)
+$(call soong_config_set,qtiaudio,headers_namespace,vendor/qcom/opensource/pal)
+$(call soong_config_set,qtiaudio,libarpal_namespace,vendor/qcom/opensource/pal)
+$(call soong_config_set,qtiaudio,feature_mcs,true)
+$(call soong_config_set_bool,qtiaudio,feature_dynamic_log,false)
+$(call soong_config_set,qtiaudio,feature_hfp_server_client,false)
+$(call soong_config_set,qtiaudio,feature_bt_a2dp_lpi,false)
+
+$(call soong_config_set_bool,qtidisplay,drmpp,true)
+$(call soong_config_set_bool,qtidisplay,headless,false)
+$(call soong_config_set_bool,qtidisplay,llvmsa,false)
+$(call soong_config_set_bool,qtidisplay,gralloc4,true)
+$(call soong_config_set_bool,qtidisplay,displayconfig_enabled,true)
+$(call soong_config_set_bool,qtidisplay,default,true)
+$(call soong_config_set_bool,qtidisplay,var1,true)
+$(call soong_config_set_bool,qtidisplay,var2,true)
+$(call soong_config_set_bool,qtidisplay,var3,false)
+$(call soong_config_set_bool,qtidisplay,llvmcov,false)
+
+$(call soong_config_set,ufsbsg,ufsframework,bsg)
+$(call soong_config_set_bool,qtidisplay,smmu_proxy,false)
 
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/audio/audio_module_config_primary.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/audio_module_config_primary.xml \
@@ -144,10 +171,6 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     system/core/libprocessgroup/profiles/task_profiles.json:$(TARGET_COPY_OUT_VENDOR)/etc/task_profiles.json \
     system/core/libprocessgroup/profiles/cgroups.json:$(TARGET_COPY_OUT_VENDOR)/etc/cgroups.json
-
-# eUICC
-PRODUCT_PACKAGES += \
-    MotoEuicc
 
 # DRM
 PRODUCT_PACKAGES += \
@@ -281,8 +304,6 @@ PRODUCT_PACKAGES += \
     LineageDialerOverlayMumba \
     DeviceAsWebcamResTarget \
     LineageSystemUIMumba \
-    LineageSdkMumba \
-    LineageSettingsProviderMumba \
     SettingsResMumba \
     TelephonyResMumba \
     ApertureResMumba
@@ -342,12 +363,7 @@ PRODUCT_PACKAGES += \
 
 # Power
 PRODUCT_PACKAGES += \
-    android.hardware.power-service.lineage-libperfmgr \
     libqti-perfd-client
-
-# PowerHint
-PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/configs/perf/powerhint.json:$(TARGET_COPY_OUT_VENDOR)/etc/powerhint.json
 
 # QSPA
 PRODUCT_PACKAGES += \
@@ -384,38 +400,17 @@ PRODUCT_SOONG_NAMESPACES += \
     $(LOCAL_PATH) \
     hardware/motorola \
     hardware/google/interfaces \
-    hardware/google/pixel/power-libperfmgr \
-    hardware/lineage/interfaces/power-libperfmgr \
-    hardware/qcom-caf/common/libqti-perfd-client
+    vendor/qcom/opensource/audio-hal/st-hal-ar \
+    device/qcom/common/vendor/usb \
+    hardware/qcom/wlan/qcwcn
 
 # Storage
 $(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
 
 # Telephony
 PRODUCT_PACKAGES += \
-    extphonelib \
-    extphonelib-product \
-    extphonelib.xml \
-    extphonelib_product.xml \
     MotoExtTelephony \
-    ims-ext-common \
-    ims_ext_common.xml \
-    qti-telephony-hidl-wrapper \
-    qti-telephony-hidl-wrapper-prd \
-    qti_telephony_hidl_wrapper.xml \
-    qti_telephony_hidl_wrapper_prd.xml \
-    qti-telephony-utils \
-    qti-telephony-utils-prd \
-    qti_telephony_utils.xml \
-    qti_telephony_utils_prd.xml \
-    telephony-ext
-
-PRODUCT_PACKAGES += \
     qcrilNrDb_vendor
-
-PRODUCT_BOOT_JARS += \
-    telephony-ext
-
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.telephony.euicc.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/permissions/android.hardware.telephony.euicc.xml \
     frameworks/native/data/etc/android.hardware.telephony.gsm.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.gsm.xml \
@@ -459,22 +454,17 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.software.verified_boot.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.verified_boot.xml
 
 # Vibrator
-$(call soong_config_set,qti_vibrator,libpalclient_namespace,hardware/qcom-caf/sm8450-6.6)
-$(call soong_config_set_bool,qti_vibrator,use_libpalclient,true)
 
 PRODUCT_PACKAGES += \
     vendor.qti.hardware.vibrator.service
 
 PRODUCT_COPY_FILES += \
-    vendor/qcom/opensource/vibrator/aidl/HapticsPolicy.xml:$(TARGET_COPY_OUT_VENDOR)/etc/HapticsPolicy.xml \
     vendor/qcom/opensource/vibrator/excluded-input-devices.xml:$(TARGET_COPY_OUT_VENDOR)/etc/excluded-input-devices.xml
 
 # VINTF
 DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE += \
-    hardware/qcom-caf/common/vendor_framework_compatibility_matrix.xml \
     hardware/motorola/vintf/device_framework_matrix.xml \
     $(DEVICE_PATH)/vintf/compatibility_matrix.device.xml
-DEVICE_MATRIX_FILE := hardware/qcom-caf/common/compatibility_matrix_aidl.xml
 DEVICE_MANIFEST_FILE += \
     $(CONFIG_HAL_SRC_DIR)/manifest_audio_qti_services.xml \
     $(DEVICE_PATH)/vintf/manifest.xml

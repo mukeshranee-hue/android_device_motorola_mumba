@@ -20,7 +20,7 @@ on property:ro.boot.revision=dvt1 && property:ro.boot.device=mona
 on property:ro.boot.revision=dvt1 && property:ro.boot.device=monai
    setprop persist.vendor.nfc.config_hal_name "libnfc-hal-st-dvt1.conf"
 
-property:ro.vendor.hw.nfc=ese_st
+on property:ro.vendor.hw.nfc=ese_st
     start gto_secure_element_aidl_service
 
 service gto_secure_element_aidl_service /vendor/bin/hw/android.hardware.secure_element-service.thales
